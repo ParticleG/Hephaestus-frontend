@@ -1,37 +1,32 @@
 <template>
   <q-page class="flex row q-pa-lg">
     <div class="col-10 column q-pa-lg">
-      <ConfigManager
-        class="q-mb-lg"
-        :configs="configs"
-        v-model="selected" />
+      <ConfigManager class="q-mb-lg" :model-value="ConfigType.Effect"/>
       <div class="row q-mb-lg q-gutter-md">
-        <EffectCard
-          :options="ANIMATION_TYPES"
-          v-model="configs[selected].animationType" />
+        <EffectCard />
       </div>
       <div class="col-grow">
         <Simple
-          v-if="configs[selected].animationType==='simple'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='simple'"
+          v-model="item" />
         <Breathing
-          v-if="configs[selected].animationType==='breathing'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='breathing'"
+          v-model="item" />
         <Strobing
-          v-if="configs[selected].animationType==='strobing'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='strobing'"
+          v-model="item" />
         <ColorCycle
-          v-if="configs[selected].animationType==='colorCycle'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='colorCycle'"
+          v-model="item" />
         <Rainbow
-          v-if="configs[selected].animationType==='rainbow'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='rainbow'"
+          v-model="item" />
         <StarryNight
-          v-if="configs[selected].animationType==='starryNight'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='starryNight'"
+          v-model="item" />
         <Smart
-          v-if="configs[selected].animationType==='smart'"
-          v-model="configs[selected]" />
+          v-if="item.animationType==='smart'"
+          v-model="item" />
       </div>
     </div>
     <div class="col-2 column q-pa-lg">
@@ -41,14 +36,12 @@
 </template>
 
 <script>
-import { useQuasar } from "quasar";
-import { defineComponent, reactive, ref } from "vue";
-import { ANIMATION_TYPES } from "boot/config";
+import { defineComponent } from "vue";
+import { storeToRefs } from "pinia";
 
 import ConfigManager from "components/ConfigManager";
 import EffectCard from "components/EffectCard";
 import EffectPreview from "components/EffectPreview";
-
 import Simple from "components/EffectSettings/Simple";
 import Breathing from "components/EffectSettings/Breathing";
 import ColorCycle from "components/EffectSettings/ColorCycle";
@@ -56,6 +49,9 @@ import Rainbow from "components/EffectSettings/Rainbow";
 import Strobing from "components/EffectSettings/Strobing";
 import Smart from "components/EffectSettings/Smart";
 import StarryNight from "components/EffectSettings/StarryNight";
+
+import { useEffectManagerStore } from "stores/effectManager";
+import ConfigType from "src/scripts/ConfigType";
 
 export default defineComponent({
   name: "DesignerPage",
@@ -72,46 +68,20 @@ export default defineComponent({
     Simple
   },
   setup() {
-    const $q = useQuasar();
-
-    let configs = reactive([{
-      name: "",
-      animationType: "simple",
-      animationDirection: ref(true),
-      startColor: ref("#000000"),
-      minPeriod: ref(500),
-      maxPeriod: ref(1000)
-    }]);
-
-    const selected = ref(0);
-
-    if ($q.localStorage.has("hephaestus.configs.effect")) {
-      configs = reactive($q.localStorage.getItem("hephaestus.configs.effect"));
-    }
-    if ($q.localStorage.has("hephaestus.lastStates.effect")) {
-      selected.value = $q.localStorage.getItem("hephaestus.lastStates.effect");
-    }
-    if (configs[selected.value] === undefined) {
-      selected.value = 0;
-    }
-
-    return { configs, selected, ANIMATION_TYPES };
+    const effectManager = useEffectManagerStore();
+    const { item } = storeToRefs(effectManager);
+    return { ConfigType, effectManager, item };
   },
-  watch: {
-    configs: {
-      handler(configs) {
-        this.$ws.sendObject({
-          action: 1,
-          data: {
-            path: this.$hid.path,
-            config: configs[this.selected]
-          }
-        });
-        this.$q.localStorage.set("hephaestus.configs.effect", configs);
-        this.$q.localStorage.set("hephaestus.lastStates.effect", this.selected);
-      },
-      deep: true
-    }
+  created() {
+    this.effectManager.$subscribe(() => {
+      this.$ws.sendObject({
+        action: 1,
+        data: {
+          path: this.$hid.path,
+          config: this.item
+        }
+      });
+    });
   },
   methods: {
     i18n(relativePath) {

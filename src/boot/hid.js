@@ -3,7 +3,7 @@ import { reactive, ref } from "vue";
 import { Notify } from "quasar";
 
 const HidHelper = reactive({
-  path: ref("\\\\?\\hid#vid_0483&pid_5750&col06#6&306e5212&0&0005#{4d1e55b2-f16f-11cf-88cb-001111000030}"),
+  path: ref("\\\\?\\hid#vid_0483&pid_5750&col06#6&3d4f710&0&0005#{4d1e55b2-f16f-11cf-88cb-001111000030}"),
   device: ref(null),
   sentMessage: ref(null),
   receivedMessage: ref(null),

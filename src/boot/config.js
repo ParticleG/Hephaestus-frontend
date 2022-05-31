@@ -1,5 +1,3 @@
-import { boot } from "quasar/wrappers";
-
 const ANIMATION_TYPES = [
   "simple",
   "breathing",

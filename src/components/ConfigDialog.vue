@@ -8,93 +8,103 @@
         <div class="text-h6">{{ i18n("labels.title") }}</div>
       </q-card-section>
       <q-card-section>
-        <q-list
-          class="non-selectable"
-          bordered
-          separator>
-          <q-item
-            v-for="(config, index) in configs"
-            :key="index"
-            v-ripple>
-            <q-item-section>
-              <q-item-label
-                :class="index===selected?'text-primary':''"
-                lines="2">
-                {{ config.name ? config.name : i18n("labels.newConfig") }}
-              </q-item-label>
-            </q-item-section>
-
-            <q-item-section side top>
-              <q-item-label :class="index===selected?'text-primary':''" caption>
-                {{ config.deviceName ? config.deviceName : i18n("labels.anonymousDevice") }}
-              </q-item-label>
-              <q-icon name="keyboard" color="primary" />
-            </q-item-section>
-          </q-item>
-        </q-list>
+        <ConfigBrief
+          :configs="effectManager.items"
+          first-caption="animationType"
+          v-model="effectManager.index"
+          @delete:index="effectManager.remove($event)" />
       </q-card-section>
-      <q-card-actions align="right">
+      <q-separator v-if="uploadPreview.length!==0" />
+      <q-card-section v-if="uploadPreview.length!==0">
+        <div class="text-h6">{{ i18n("labels.preview") }}</div>
+      </q-card-section>
+      <q-card-section v-if="uploadPreview.length!==0">
+        <ConfigBrief
+          :configs="uploadPreview"
+          @delete:index="deleteUpload($event)" />
+      </q-card-section>
+      <q-card-actions class="q-pa-md q-gutter-sm" align="right">
         <q-btn
-          flat
-          :label="i18n('labels.cancel')"
-          @click="cancel" />
+          color="positive"
+          icon="mdi-book-plus"
+          outline
+          padding="sm"
+          @click.stop="effectManager.create" />
+        <q-file
+          accept=".json"
+          dense
+          :label="i18n('labels.importConfig')"
+          outlined
+          multiple
+          v-model="uploadFiles">
+          <template v-slot:append>
+            <q-btn
+              flat
+              icon="mdi-upload"
+              round
+              padding="xs"
+              @click.stop="importConfig" />
+          </template>
+        </q-file>
+        <q-space />
         <q-btn
           color="primary"
-          flat
-          :label="i18n('labels.confirm')"
-          @click="confirm" />
+          :label="i18n('labels.close')"
+          no-caps
+          @click="cancel" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script>
-import { computed, defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 import { useDialogPluginComponent } from "quasar";
+
+import ConfigBrief from "components/ConfigBrief";
+import { useEffectManagerStore } from "stores/effectManager";
 
 export default defineComponent({
   name: "ConfigDialog",
+  components: { ConfigBrief },
   emits: [...useDialogPluginComponent.emits],
-  props: {
-    modelValue: {
-      type: Number,
-      required: true
-    },
-    configs: {
-      type: Array,
-      required: true
-    },
-    selectCallback: {
-      type: Function, default: (value) => {
-        console.log(value);
-      }
-    },
-    insertCallback: {
-      type: Function, default: (value) => {
-        console.log(value);
-      }
-    },
-    removeCallback: {
-      type: Function, default: (value) => {
-        console.log(value);
-      }
-    }
-  },
-  setup(props) {
+  setup() {
     const { dialogRef, onDialogHide } = useDialogPluginComponent();
-    const selected = computed({
-      get: () => props.modelValue,
-      set: (value) => props.selectCallback(value)
-    });
+    const effectManager = useEffectManagerStore();
+    const uploadFiles = ref([]);
+    const uploadPreview = ref([]);
     return {
       dialogRef,
       onDialogHide,
-      selected
+      effectManager,
+      uploadFiles,
+      uploadPreview
     };
+  },
+  watch: {
+    uploadFiles: {
+      async handler(files) {
+        this.uploadPreview = [];
+        if (files) {
+          for (const file of files) {
+            this.uploadPreview.push(JSON.parse(await file.text()));
+          }
+        }
+      },
+      deep: true
+    }
   },
   methods: {
     i18n(relativePath) {
       return this.$t("components.configDialog." + relativePath);
+    },
+    importConfig() {
+      this.uploadFiles[0].text().then(res => {
+        console.log(res);
+      });
+    },
+    deleteUpload(index) {
+      this.uploadFiles.splice(index, 1);
     },
     cancel() {
       this.hide();

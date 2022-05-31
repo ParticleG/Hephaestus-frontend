@@ -7,12 +7,29 @@
         round
         icon="menu"
         @click="$emit('click:leftMenu')" />
-      <!--      <q-avatar>-->
-      <!--        <q-img src="svg/logo-white.svg" alt="logo"/>-->
-      <!--      </q-avatar>-->
+      <q-avatar>
+        <q-img src="images/icon.png" alt="logo" />
+      </q-avatar>
       <q-toolbar-title>
         {{ i18n("labels.title") }}
       </q-toolbar-title>
+      <q-tabs
+        class="text-grey-5"
+        active-color="white"
+        inline-label
+        mobile-arrows
+        no-caps
+        outside-arrows>
+        <q-route-tab
+          v-for="tab in tabs"
+          :key="tab"
+          :disable="tab.disable"
+          exact
+          :icon="tab.icon"
+          :label="i18n(`labels.${tab.label}`)"
+          ripple
+          :to="tab.to" />
+      </q-tabs>
       <q-space />
       <q-btn class="q-mx-sm" dense flat icon="language">
         <LanguagesMenu />
@@ -30,7 +47,8 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
+import { useRoute } from "vue-router";
 import SettingsMenu from "components/SettingsMenu";
 import LanguagesMenu from "components/LanguagesMenu";
 
@@ -38,32 +56,52 @@ export default defineComponent({
   name: "MainHeader",
   components: { LanguagesMenu, SettingsMenu },
   setup() {
-    function minimize() {
-      if (process.env.MODE === "electron") {
-        window["electronWindowApi"].minimize();
+    const currentRoute = computed(() => {
+      return useRoute().name;
+    });
+    const tabs = [
+      {
+        label: "dashboard",
+        icon: "view_quilt",
+        disable: false,
+        to: "/dashboard"
+      },
+      {
+        label: "designer",
+        icon: "palette",
+        disable: false,
+        to: "/designer"
+      },
+      {
+        label: "tuning",
+        icon: "tune",
+        disable: false,
+        to: "/tuning"
       }
-    }
-
-    function toggleMaximize() {
-      if (process.env.MODE === "electron") {
-        window["electronWindowApi"].toggleMaximize();
-      }
-    }
-
-    function closeApp() {
-      if (process.env.MODE === "electron") {
-        window["electronWindowApi"].close();
-      }
-    }
-    return {
-      minimize,
-      toggleMaximize,
-      closeApp,
-    };
+    ];
+    return { currentRoute, tabs };
   },
   methods: {
     i18n(relativePath) {
       return this.$t("layouts.headers.main." + relativePath);
+    },
+    minimize() {
+      if (process.env.MODE === "electron") {
+        /** @property {Object} window */
+        window["electronWindowApi"].minimize();
+      }
+    },
+    toggleMaximize() {
+      if (process.env.MODE === "electron") {
+        /** @property {Object} window */
+        window["electronWindowApi"].toggleMaximize();
+      }
+    },
+    closeApp() {
+      if (process.env.MODE === "electron") {
+        /** @property {Object} window */
+        window["electronWindowApi"].close();
+      }
     }
   }
 });

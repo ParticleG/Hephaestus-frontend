@@ -5,6 +5,7 @@ const routes = [
     children: [
       {path: '', redirect: '/dashboard'},
       {
+        name: 'dashboard',
         path: 'dashboard',
         components: {
           default: () => import('pages/Dashboard'),
@@ -13,6 +14,7 @@ const routes = [
         }
       },
       {
+        name: 'designer',
         path: 'designer',
         components: {
           default: () => import('pages/Designer'),
@@ -21,6 +23,7 @@ const routes = [
         }
       },
       {
+        name: 'tuning',
         path: 'tuning',
         components: {
           default: () => import('pages/Tuning'),

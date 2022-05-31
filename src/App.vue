@@ -6,6 +6,9 @@
 import { defineComponent } from "vue";
 import { Notify, useQuasar } from "quasar";
 
+import { useEffectManagerStore } from "stores/effectManager";
+import { useKeymapManagerStore } from "stores/keymapManager";
+
 export default defineComponent({
   name: "App",
   setup() {
@@ -15,6 +18,9 @@ export default defineComponent({
     } else {
       $q.dark.set("auto");
     }
+    const effectManager = useEffectManagerStore();
+    const keymapManager = useKeymapManagerStore();
+    return { effectManager, keymapManager };
   },
   created() {
     if (this.$q.localStorage.has("hephaestus.settings.language")) {
@@ -22,12 +28,20 @@ export default defineComponent({
     } else {
       this.$i18n.locale = this.$q.lang.getLocale();
     }
+    this.initStores();
     this.initWebSocket();
     this.initHid();
+
+    /** @property {Object} window */
+    window.addEventListener("beforeunload", this.beforeUnload);
   },
   methods: {
     i18n(relativePath) {
       return this.$t("global.app." + relativePath);
+    },
+    initStores() {
+      this.effectManager.init(this.$q.localStorage);
+      this.keymapManager.init(this.$q.localStorage);
     },
     initWebSocket() {
       this.$ws.setOnOpen(() => {
@@ -58,7 +72,7 @@ export default defineComponent({
         if (message.type !== "client") {
           Notify.create({
             type: "warning",
-            message: this.i18n("notifications.ws.actions.0.failed") + message.reason,
+            message: this.i18n("notifications.ws.actions.0.failed") + this.$t(message.reason),
             icon: "mdi-keyboard-off"
           });
         } else {
@@ -74,7 +88,7 @@ export default defineComponent({
         if (message.type !== "client") {
           Notify.create({
             type: "warning",
-            message: this.i18n("notifications.ws.actions.1.success") + message.reason,
+            message: this.i18n("notifications.ws.actions.1.failed") + this.$t(message.reason),
             icon: "mdi-message-alert"
           });
         }
@@ -95,6 +109,10 @@ export default defineComponent({
           icon: "link_off"
         });
       });
+    },
+    beforeUnload() {
+      this.effectManager.save(this.$q.localStorage);
+      this.keymapManager.save(this.$q.localStorage);
     }
   }
 });
